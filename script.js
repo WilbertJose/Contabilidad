@@ -100,7 +100,7 @@ function renderizarVistas() {
         </tr>
     `;
 
-    // 2. DIBUJAR CUENTAS T (MAYOR)
+    // 2. DIBUJAR CUENTAS T MAYOR
     mayorGrid.innerHTML = '';
     
     // El orden específico para que salgan como en tu captura

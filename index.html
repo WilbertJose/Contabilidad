@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Contable - Partidas</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Sistema Contable</h1>
+
+        <div class="section-card">
+            <h2>Crear Nueva Partida</h2>
+            
+            <div class="form-group">
+                <label for="descripcion">Descripción de la operación</label>
+                <input type="text" id="descripcion" placeholder="Ejemplo: Compra de mercadería...">
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Cuenta</th>
+                        <th>Debe</th>
+                        <th>Haber</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="filas-partida">
+                    </tbody>
+            </table>
+
+            <button id="btn-agregar-fila" class="btn secondary">+ Agregar Cuenta</button>
+
+            <div class="totales">
+                <p><strong>Total Debe: </strong>$<span id="total-debe">0.00</span></p>
+                <p><strong>Total Haber: </strong>$<span id="total-haber">0.00</span></p>
+            </div>
+
+            <button id="btn-guardar-partida" class="btn primary">Guardar Partida</button>
+        </div>
+
+        <hr>
+
+        <div class="section-card">
+            <h2>Partidas Guardadas</h2>
+            <div id="lista-partidas">
+                <p class="empty-state">No hay partidas guardadas aún.</p>
+            </div>
+        </div>
+
+        <hr>
+
+        <div class="section-card">
+            <h2>📘 Libro Mayor</h2>
+            <div id="lista-mayor">
+                <p class="empty-state">No hay registros en el mayor aún.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

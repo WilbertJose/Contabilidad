@@ -3,63 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema Contable - Partidas</title>
+    <title>Sistema Contable Automático</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
         <h1>Sistema Contable</h1>
 
-        <div class="section-card">
-            <h2>Crear Nueva Partida</h2>
-            
-            <div class="form-group">
-                <label for="descripcion">Descripción de la operación</label>
-                <input type="text" id="descripcion" placeholder="Ejemplo: Compra de mercadería...">
-            </div>
+        <div class="section-card input-section">
+            <input type="text" id="input-operacion" placeholder="Escriba su registro: ">
+            <button id="btn-registrar" class="btn primary">Registrar</button>
+        </div>
 
+        <div class="section-card">
+            <h2>Libro Diario</h2>
             <table>
                 <thead>
                     <tr>
+                        <th>Código</th>
                         <th>Cuenta</th>
                         <th>Debe</th>
                         <th>Haber</th>
-                        <th></th>
                     </tr>
                 </thead>
-                <tbody id="filas-partida">
+                <tbody id="diario-body">
                     </tbody>
+                <tfoot id="diario-foot">
+                    </tfoot>
             </table>
-
-            <button id="btn-agregar-fila" class="btn secondary">+ Agregar Cuenta</button>
-
-            <div class="totales">
-                <p><strong>Total Debe: </strong>$<span id="total-debe">0.00</span></p>
-                <p><strong>Total Haber: </strong>$<span id="total-haber">0.00</span></p>
-            </div>
-
-            <button id="btn-guardar-partida" class="btn primary">Guardar Partida</button>
         </div>
 
-        <hr>
-
         <div class="section-card">
-            <h2>Partidas Guardadas</h2>
-            <div id="lista-partidas">
-                <p class="empty-state">No hay partidas guardadas.</p>
-            </div>
-        </div>
-
-        <hr>
-
-        <div class="section-card">
-            <h2>📘 Libro Mayor</h2>
-            <div id="lista-mayor">
-                <p class="empty-state">No hay registros en el Libro Mayor aún.</p>
-            </div>
+            <h2>Cuentas T (Libro Mayor)</h2>
+            <div class="mayor-grid" id="mayor-grid">
+                </div>
         </div>
     </div>
-
     <script src="script.js"></script>
 </body>
 </html>

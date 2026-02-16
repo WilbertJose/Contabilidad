@@ -1,307 +1,134 @@
-// Catálogo de cuentas original
-const cuentas = [
-    { code: '1101', name: 'Efectivo y Equivalentes' },
-    { code: '1103', name: 'Cuentas por Cobrar Clientes' },
-    { code: '1104', name: 'IVA Crédito Fiscal (13%)' },
-    { code: '1105', name: 'Inventarios' },
-    { code: '1201', name: 'Propiedad, Planta y Equipo' },
-    { code: '2101', name: 'Cuentas por Pagar Proveedores' },
-    { code: '2102', name: 'IVA Débito Fiscal (13%)' },
-    { code: '3101', name: 'Capital Social' },
-    { code: '4101', name: 'Ventas' },
-    { code: '4102', name: 'Rebajas y Devoluciones s/ Ventas' },
-    { code: '5101', name: 'Compras' },
-    { code: '5102', name: 'Gastos de Venta' }
-];
+// Catálogo base requerido
+const catalogo = {
+    '1105': 'Inventarios',
+    '1104': 'IVA Credito Fiscal (13%)',
+    '1101': 'Efectivo y Equivalentes'
+};
 
-let partidas = [];
-let contadorPartidas = 1;
+// Variables para almacenar datos globales
+let diario = []; 
+let cuentasMayor = {};
 
-// Referencias del DOM.
-const tbodyNuevaPartida = document.getElementById('filas-partida');
-const btnAgregarFila = document.getElementById('btn-agregar-fila');
-const btnGuardarPartida = document.getElementById('btn-guardar-partida');
-const totalDebeSpan = document.getElementById('total-debe');
-const totalHaberSpan = document.getElementById('total-haber');
-const descripcionInput = document.getElementById('descripcion');
-const listaPartidas = document.getElementById('lista-partidas');
-const listaMayor = document.getElementById('lista-mayor');
+// Elementos del DOM
+const btnRegistrar = document.getElementById('btn-registrar');
+const inputOperacion = document.getElementById('input-operacion');
+const diarioBody = document.getElementById('diario-body');
+const diarioFoot = document.getElementById('diario-foot');
+const mayorGrid = document.getElementById('mayor-grid');
 
-// Generar select con las cuentas.
-function generarOpcionesCuenta() {
-    return cuentas.map(c => `<option value="${c.code}">${c.code} - ${c.name}</option>`).join('');
-}
-
-// Agregar nueva fila a la tabla de creación.
-function agregarFila() {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-        <td>
-            <select class="cuenta-select">
-                <option value="">Seleccione cuenta</option>
-                ${generarOpcionesCuenta()}
-            </select>
-        </td>
-        <td><input type="number" class="debe-input" min="0" step="0.01" placeholder="0.00"></td>
-        <td><input type="number" class="haber-input" min="0" step="0.01" placeholder="0.00"></td>
-        <td><button class="btn danger btn-eliminar">X</button></td>
-    `;
-    tbodyNuevaPartida.appendChild(tr);
-}
-
-// Calcular sumatorias de Debe y Haber.
-function calcularTotales() {
-    let totalDebe = 0;
-    let totalHaber = 0;
-
-    document.querySelectorAll('.debe-input').forEach(input => {
-        totalDebe += parseFloat(input.value) || 0;
-    });
-
-    document.querySelectorAll('.haber-input').forEach(input => {
-        totalHaber += parseFloat(input.value) || 0;
-    });
-
-    totalDebeSpan.textContent = totalDebe.toFixed(2);
-    totalHaberSpan.textContent = totalHaber.toFixed(2);
-
-    return { totalDebe, totalHaber };
-}
-
-// Delegación de eventos para las celdas dinámicas
-tbodyNuevaPartida.addEventListener('input', (e) => {
-    if (e.target.classList.contains('debe-input') || e.target.classList.contains('haber-input')) {
-        calcularTotales();
-    }
-});
-
-tbodyNuevaPartida.addEventListener('click', (e) => {
-    if (e.target.classList.contains('btn-eliminar')) {
-        e.target.closest('tr').remove();
-        calcularTotales();
-    }
-});
-
-btnAgregarFila.addEventListener('click', agregarFila);
-
-// Lógica principal para guardar y validar la partida
-btnGuardarPartida.addEventListener('click', () => {
-    const { totalDebe, totalHaber } = calcularTotales();
-    const descripcion = descripcionInput.value.trim();
-
-    if (!descripcion) {
-        alert("Por favor ingrese una descripción para la operación.");
-        return;
-    }
-
-    if (totalDebe === 0 && totalHaber === 0) {
-        alert("La partida no puede estar en cero.");
-        return;
-    }
-
-    // Validación de la Partida Doble
-    if (totalDebe.toFixed(2) !== totalHaber.toFixed(2)) {
-        alert("ATENCIÓN: El Total Debe y el Total Haber no cuadran.");
-        return;
-    }
-
-    const filas = document.querySelectorAll('#filas-partida tr');
-    let movimientos = [];
-    let error = false;
-
-    filas.forEach(fila => {
-        const codigoCuenta = fila.querySelector('.cuenta-select').value;
-        const debe = parseFloat(fila.querySelector('.debe-input').value) || 0;
-        const haber = parseFloat(fila.querySelector('.haber-input').value) || 0;
-
-        if (debe > 0 || haber > 0) {
-            if (!codigoCuenta) {
-                error = true;
-                alert("Debe seleccionar una cuenta para los montos ingresados.");
-                return;
-            }
-
-            const cuentaObj = cuentas.find(c => c.code === codigoCuenta);
-            movimientos.push({
-                codigo: codigoCuenta,
-                cuenta: cuentaObj.name,
-                debe: debe,
-                haber: haber
-            });
-        }
-    });
-
-    if (error) return;
-
-    if (movimientos.length < 2) {
-        alert("Toda partida debe tener al menos dos movimientos.");
-        return;
-    }
-
-    // Fecha actual para el guardado
-    const fecha = new Date().toISOString().split('T')[0];
-    
-    const nuevaPartida = {
-        id: contadorPartidas++,
-        fecha: fecha,
-        descripcion: descripcion,
-        movimientos: movimientos
-    };
-
-    partidas.push(nuevaPartida);
-    
-    // Limpiar campos luego de guardar
-    descripcionInput.value = '';
-    tbodyNuevaPartida.innerHTML = '';
-    agregarFila();
-    agregarFila(); // Comenzar siempre con dos filas limpias
-    calcularTotales();
-
-    // Actualizar Vistas
-    renderizarPartidasGuardadas();
-    renderizarLibroMayor();
-});
-
-// Formateador de moneda para las tablas
+// Formato de Moneda ($X,XXX.XX)
 function formatMoney(amount) {
     return '$' + amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-// Pintar la sección de Partidas Guardadas
-function renderizarPartidasGuardadas() {
-    listaPartidas.innerHTML = '';
-
-    if (partidas.length === 0) {
-        listaPartidas.innerHTML = '<p class="empty-state">No hay partidas guardadas aún.</p>';
+function procesarOperacion() {
+    const texto = inputOperacion.value.trim();
+    if (!texto) {
+        alert('Por favor, escribe una descripción con el monto.');
         return;
     }
 
-    // Clonamos y volteamos para que la más nueva salga arriba.
-    [...partidas].reverse().forEach(p => {
-        let tablaHTML = `
-            <div class="partida-card">
-                <div class="partida-header">
-                    Partida #${p.id} | ${p.fecha} | ${p.descripcion}
-                </div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Código</th>
-                            <th>Cuenta</th>
-                            <th>Debe</th>
-                            <th>Haber</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-        `;
-
-        p.movimientos.forEach(m => {
-            tablaHTML += `
-                <tr>
-                    <td>${m.codigo}</td>
-                    <td>${m.cuenta}</td>
-                    <td>${formatMoney(m.debe)}</td>
-                    <td>${formatMoney(m.haber)}</td>
-                </tr>
-            `;
-        });
-
-        tablaHTML += `
-                    </tbody>
-                </table>
-            </div>
-        `;
-
-        listaPartidas.innerHTML += tablaHTML;
-    });
-}
-
-// Lógica de "Cuentas T" - Generar el Libro Mayor
-function renderizarLibroMayor() {
-    listaMayor.innerHTML = '';
-
-    if (partidas.length === 0) {
-        listaMayor.innerHTML = '<p class="empty-state">No hay registros en el mayor aún.</p>';
+    // Usamos Expresiones Regulares (Regex) para extraer SOLO el número de la frase
+    const matchNumeros = texto.match(/(\d+(?:\.\d+)?)/);
+    
+    if (!matchNumeros) {
+        alert('No pude detectar ningún monto numérico en tu texto.');
         return;
     }
 
-    const mayor = {};
+    // Convertir el texto encontrado a un número real
+    const montoBase = parseFloat(matchNumeros[0]);
 
-    // Agrupar todas las transacciones según su código de cuenta
-    partidas.forEach(p => {
-        p.movimientos.forEach(m => {
-            if (!mayor[m.codigo]) {
-                mayor[m.codigo] = { nombre: m.cuenta, movimientos: [], totalDebe: 0, totalHaber: 0 };
-            }
-            mayor[m.codigo].movimientos.push({
-                fecha: p.fecha,
-                partidaId: p.id,
-                debe: m.debe,
-                haber: m.haber
-            });
-            mayor[m.codigo].totalDebe += m.debe;
-            mayor[m.codigo].totalHaber += m.haber;
-        });
-    });
+    // CÁLCULOS AUTOMÁTICOS (Según la fórmula de tu imagen)
+    const montoInventario = montoBase;            // Ej: 5000
+    const montoIVA = montoBase * 0.13;            // Ej: 650
+    const montoEfectivo = montoInventario + montoIVA; // Ej: 5650
 
-    for (const codigo in mayor) {
-        const c = mayor[codigo];
-        let saldo = 0;
-        let tipoSaldo = '';
+    // Construir la partida doble
+    const partidaNueva = [
+        { codigo: '1105', cuenta: catalogo['1105'], debe: montoInventario, haber: 0 },
+        { codigo: '1104', cuenta: catalogo['1104'], debe: montoIVA, haber: 0 },
+        { codigo: '1101', cuenta: catalogo['1101'], debe: 0, haber: montoEfectivo }
+    ];
 
-        // Determinación de saldo Deudor/Acreedor
-        if (c.totalDebe > c.totalHaber) {
-            saldo = c.totalDebe - c.totalHaber;
-            tipoSaldo = 'Deudor';
-        } else if (c.totalHaber > c.totalDebe) {
-            saldo = c.totalHaber - c.totalDebe;
-            tipoSaldo = 'Acreedor';
-        } else {
-            saldo = 0;
-            tipoSaldo = 'Saldada';
+    // Reiniciar los arreglos para que se comporte como en tu imagen (una partida a la vez en pantalla)
+    // Si quisieras que se sumen infinitamente, simplemente borra estas dos siguientes líneas:
+    diario = []; 
+    cuentasMayor = {}; 
+
+    // Guardar en las variables globales
+    diario.push(...partidaNueva);
+
+    partidaNueva.forEach(mov => {
+        if (!cuentasMayor[mov.codigo]) {
+            cuentasMayor[mov.codigo] = { nombre: mov.cuenta, debe: 0, haber: 0 };
         }
+        cuentasMayor[mov.codigo].debe += mov.debe;
+        cuentasMayor[mov.codigo].haber += mov.haber;
+    });
 
-        let html = `
-            <div class="cuenta-mayor">
-                <h3>${codigo} - ${c.nombre}</h3>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Fecha</th>
-                            <th>Partida</th>
-                            <th>Debe</th>
-                            <th>Haber</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-        `;
-
-        c.movimientos.forEach(m => {
-            html += `
-                <tr>
-                    <td>${m.fecha}</td>
-                    <td>#${m.partidaId}</td>
-                    <td>${formatMoney(m.debe)}</td>
-                    <td>${formatMoney(m.haber)}</td>
-                </tr>
-            `;
-        });
-
-        html += `
-                    <tr>
-                        <td colspan="2"><strong>TOTALES</strong></td>
-                        <td><strong>${formatMoney(c.totalDebe)}</strong></td>
-                        <td><strong>${formatMoney(c.totalHaber)}</strong></td>
-                    </tr>
-                    </tbody>
-                </table>
-                <div class="saldo-final">
-                    Saldo Final: ${formatMoney(saldo)} (${tipoSaldo})
-                </div>
-            </div>
-        `;
-        listaMayor.innerHTML += html;
-    }
+    // Limpiar Input y Mostrar Datos
+    inputOperacion.value = '';
+    renderizarVistas();
 }
-agregarFila();
-agregarFila();
+
+function renderizarVistas() {
+    // 1. DIBUJAR LIBRO DIARIO
+    diarioBody.innerHTML = '';
+    let totalDebe = 0;
+    let totalHaber = 0;
+
+    diario.forEach(mov => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${mov.codigo}</td>
+            <td>${mov.cuenta}</td>
+            <td>${mov.debe > 0 ? formatMoney(mov.debe) : '$0.00'}</td>
+            <td>${mov.haber > 0 ? formatMoney(mov.haber) : '$0.00'}</td>
+        `;
+        diarioBody.appendChild(tr);
+        totalDebe += mov.debe;
+        totalHaber += mov.haber;
+    });
+
+    // Pie de tabla con totales
+    diarioFoot.innerHTML = `
+        <tr>
+            <th colspan="2">TOTALES</th>
+            <th>${formatMoney(totalDebe)}</th>
+            <th>${formatMoney(totalHaber)}</th>
+        </tr>
+    `;
+
+    // 2. DIBUJAR CUENTAS T (MAYOR)
+    mayorGrid.innerHTML = '';
+    
+    // El orden específico para que salgan como en tu captura
+    const ordenTarjetas = ['1105', '1104', '1101']; 
+    
+    ordenTarjetas.forEach(codigo => {
+        if (cuentasMayor[codigo]) {
+            const cuenta = cuentasMayor[codigo];
+            // Fórmula estricta de tu captura: Saldo = Debe - Haber
+            const saldoFinal = cuenta.debe - cuenta.haber; 
+            
+            const div = document.createElement('div');
+            div.className = 'cuenta-t-card';
+            div.innerHTML = `
+                <h3>${cuenta.nombre}</h3>
+                <p><strong>Debe:</strong> ${formatMoney(cuenta.debe)}</p>
+                <p><strong>Haber:</strong> ${formatMoney(cuenta.haber)}</p>
+                <p class="saldo">Saldo: ${formatMoney(saldoFinal)}</p>
+            `;
+            mayorGrid.appendChild(div);
+        }
+    });
+}
+
+// Eventos de click y tecla "Enter"
+btnRegistrar.addEventListener('click', procesarOperacion);
+inputOperacion.addEventListener('keypress', function (e) {
+    if (e.key === 'Enter') {
+        procesarOperacion();
+    }
+});
